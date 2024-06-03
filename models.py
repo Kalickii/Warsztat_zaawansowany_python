@@ -12,16 +12,13 @@ class User:
         self.username = username
         self.password = password
 
-
     @property
     def id(self):
         """returns the id of the user"""
         return self._id
 
-
     def change_password(self, password):
         self.password = password
-
 
     def save(self):
         """
@@ -51,7 +48,6 @@ class User:
         finally:
             conn.close()
 
-
     @staticmethod
     def load_user_id_by_username(username):
         """
@@ -70,7 +66,6 @@ class User:
         finally:
             conn.close()
 
-
     @staticmethod
     def load_user_by_username(username):
         """
@@ -85,11 +80,10 @@ class User:
         conn.close()
         return user
 
-
     @staticmethod
     def load_user_by_id(user_id):
         """
-        The method loads a user from the database by the given id
+        The method loads a user from the database by the given user_id
         :param user_id: id of the user we want to load
         :return: user with given id
         """
@@ -99,11 +93,11 @@ class User:
             query = """SELECT * FROM users WHERE id = %s;"""
             cur.execute(query, (user_id,))
             user = cur.fetchall()
-            conn.close()
             return user
         except Exception as e:
             print(e)
-
+        finally:
+            conn.close()
 
     @staticmethod
     def load_all_users():
@@ -123,7 +117,6 @@ class User:
         finally:
             conn.close()
 
-
     def delete(self):
         """
         Method for deleting a user from the database
@@ -135,13 +128,12 @@ class User:
             query = """DELETE FROM users WHERE id = %s;"""
             cur.execute(query, (self._id,))
             self._id = -1
+            conn.commit()
         except Exception as e:
             print(e)
             conn.rollback()
         finally:
-            conn.commit()
             conn.close()
-
 
 
 class Message:
@@ -152,15 +144,14 @@ class Message:
         self.text = text
         self._creation_data = None
 
-
     @property
     def id(self):
+        print(self._id)
         return self._id
-
 
     def save(self):
         """
-        Method for saving the user to the database, or updating the password.
+        Method for saving the message to the database, or updating it.
         :return: save/update the user to the database
         """
         conn = psycopg2.connect(**local_settings)
@@ -170,7 +161,8 @@ class Message:
                 query = """UPDATE messages SET from_id = %s, to_id = %s, text = %s WHERE id = %s;"""
                 cur.execute(query, (self.from_id, self.to_id, self.text, self._id))
             else:
-                query = """INSERT INTO messages(from_id, to_id, text) VALUES(%s, %s, %s) returning id, creation_date;"""
+                query = """INSERT INTO messages(from_id, to_id, text, creation_date) 
+                VALUES(%s, %s, %s, %s) returning id, creation_date;"""
                 cur.execute(query, (self.from_id, self.to_id, self.text, rounded_now))
                 self._id, self._creation_data = cur.fetchone()
             conn.commit()
@@ -179,7 +171,6 @@ class Message:
             conn.rollback()
         finally:
             conn.close()
-
 
     @staticmethod
     def load_all_messages():
@@ -198,4 +189,3 @@ class Message:
             print(e)
         finally:
             conn.close()
-
