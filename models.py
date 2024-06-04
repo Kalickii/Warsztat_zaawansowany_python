@@ -20,6 +20,9 @@ class User:
     def change_password(self, password):
         self.password = password
 
+    def change_username(self, username):
+        self.username = username
+
     def save(self):
         """
         Method for saving the user to the database, or updating the password.
@@ -49,24 +52,6 @@ class User:
             conn.close()
 
     @staticmethod
-    def load_user_id_by_username(username):
-        """
-        Method to check the id exists, used for save() method
-        :return: id of the user if it exists, None otherwise
-        """
-        conn = psycopg2.connect(**local_settings)
-        try:
-            cur = conn.cursor()
-            query = """SELECT id FROM users WHERE username = %s;"""
-            cur.execute(query, (username,))
-            result = cur.fetchone()
-            return result[0] if result else None
-        except Exception as e:
-            print(e)
-        finally:
-            conn.close()
-
-    @staticmethod
     def load_user_by_username(username):
         """
         The method loads user from database by the given username.
@@ -78,7 +63,7 @@ class User:
         cur.execute(query, (username,))
         user = cur.fetchall()
         conn.close()
-        return user
+        return user if user else None
 
     @staticmethod
     def load_user_by_id(user_id):
@@ -129,6 +114,42 @@ class User:
             cur.execute(query, (self._id,))
             self._id = -1
             conn.commit()
+        except Exception as e:
+            print(e)
+            conn.rollback()
+        finally:
+            conn.close()
+
+    @staticmethod
+    def load_user_id_by_username(username):
+        """
+        Method to check the id exists, used for save() method
+        :return: id of the user if it exists, None otherwise
+        """
+        conn = psycopg2.connect(**local_settings)
+        try:
+            cur = conn.cursor()
+            query = """SELECT id FROM users WHERE username = %s;"""
+            cur.execute(query, (username,))
+            result = cur.fetchone()
+            return result[0] if result else None
+        except Exception as e:
+            print(e)
+        finally:
+            conn.close()
+
+    @staticmethod
+    def login_validate(username, password):
+        conn = psycopg2.connect(**local_settings)
+        try:
+            cur = conn.cursor()
+            query = """SELECT password FROM users WHERE username = %s;"""
+            cur.execute(query, (username,))
+            result = cur.fetchone()[0]
+            if result == password:
+                return True
+            else:
+                return False
         except Exception as e:
             print(e)
             conn.rollback()
