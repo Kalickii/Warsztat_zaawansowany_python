@@ -9,8 +9,10 @@ if __name__ == '__main__':
 4 - Change username
 5 - Change password
 6 - Delete user
-7 - Log out
-8 - Exit
+7 - Load your messages
+8 - Send message
+9 - Log out
+10 - Exit
 """
 
     logged_user = None
@@ -87,12 +89,36 @@ if __name__ == '__main__':
 
         elif opcja == "7":
             if logged_user is not None:
+                messages = logged_user.list_messages()
+                for message in messages:
+                    print(message)
+            else:
+                print("You have to login before you load your messages")
+
+        elif opcja == "8":
+            if logged_user is not None:
+                receiver = input("Receiver: ")
+                if User.load_user_by_username(receiver) is not None:
+                    receiver_id = User.load_user_id_by_username(receiver)
+                    message = input("Message: ")
+                    if len(message) < 255:
+                        logged_user.send_message(receiver_id, message)
+                        print("Message sent successfully")
+                    else:
+                        print("Message too long")
+                else:
+                    print("Invalid receiver name")
+            else:
+                print("You have to login to be able to send messages")
+
+        elif opcja == "9":
+            if logged_user is not None:
                 logged_user = None
                 print("Logged out successfully")
             else:
                 print("You are not logged in")
 
-        elif opcja == "8":
+        elif opcja == "10":
             break
 
         else:

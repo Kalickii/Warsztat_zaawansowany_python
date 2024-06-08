@@ -2,7 +2,6 @@ from scripts import *
 import psycopg2
 
 
-
 def create_db():
     query = create_db_script
     conn = psycopg2.connect(**settings)
@@ -11,6 +10,7 @@ def create_db():
     cur.execute(query)
     conn.commit()
     conn.close()
+
 
 def create_tb_users():
     query = create_table_users
@@ -21,6 +21,7 @@ def create_tb_users():
     conn.commit()
     conn.close()
 
+
 def create_tb_messages():
     query = create_table_messages
     conn = psycopg2.connect(**local_settings)
@@ -29,7 +30,6 @@ def create_tb_messages():
     cur.execute(query)
     conn.commit()
     conn.close()
-
 
 
 if __name__ == '__main__':

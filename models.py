@@ -156,6 +156,40 @@ class User:
         finally:
             conn.close()
 
+    def list_messages(self):
+        """
+        The method gives us a list of all the messages to the chosen user
+        :return: list of messages to the user
+        """
+        conn = psycopg2.connect(**local_settings)
+        try:
+            cur = conn.cursor()
+            query = """SELECT from_id, creation_date, text FROM messages WHERE to_id = %s;"""
+            cur.execute(query, (User.load_user_id_by_username(self.username),))
+            messages = cur.fetchall()
+            formated_messages = []
+            for message in messages:
+                from_id, creation_date, text = message
+                x = User.load_user_by_id(from_id)
+                from_id = x[0][1]
+                formated_datetime = creation_date.strftime('%H:%M %d.%m.%Y')
+                formated_messages.append((from_id, formated_datetime, text))
+            return formated_messages
+        except Exception as e:
+            print(e)
+        finally:
+            conn.close()
+
+    def send_message(self, to_user, text):
+        """
+        Method for sending a message to the chosen user
+        :param to_user: id of the message receiver
+        :param text: text of the message
+        :return: send a message and save it to the database
+        """
+        message = Message(self._id, to_user, text)
+        message.save()
+
 
 class Message:
     def __init__(self, from_id, to_id, text):
