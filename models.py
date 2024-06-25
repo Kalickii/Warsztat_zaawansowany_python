@@ -32,15 +32,9 @@ class User:
         try:
             cur = conn.cursor()
             if self._id == -1:
-                existing_id = User.load_user_id_by_username(self.username)
-                if existing_id:
-                    self._id = existing_id
-                    query = """UPDATE users SET username = %s, password = %s WHERE id = %s;"""
-                    cur.execute(query, (self.username, self.password, self._id))
-                else:
-                    query = """INSERT INTO users(username, password) VALUES(%s, %s) returning id;"""
-                    cur.execute(query, (self.username, self.password))
-                    self._id = cur.fetchone()[0]
+                query = """INSERT INTO users(username, password) VALUES(%s, %s) returning id;"""
+                cur.execute(query, (self.username, self.password))
+                self._id = cur.fetchone()[0]
             else:
                 query = """UPDATE users SET username = %s, password = %s WHERE id = %s;"""
                 cur.execute(query, (self.username, self.password, self._id))
@@ -63,7 +57,7 @@ class User:
         cur.execute(query, (username,))
         user = cur.fetchall()
         conn.close()
-        return user if user else None
+        return user[0] if user else None
 
     @staticmethod
     def load_user_by_id(user_id):
@@ -121,24 +115,6 @@ class User:
             conn.close()
 
     @staticmethod
-    def load_user_id_by_username(username):
-        """
-        Method to check the id exists, used for save() method
-        :return: id of the user if it exists, None otherwise
-        """
-        conn = psycopg2.connect(**local_settings)
-        try:
-            cur = conn.cursor()
-            query = """SELECT id FROM users WHERE username = %s;"""
-            cur.execute(query, (username,))
-            result = cur.fetchone()
-            return result[0] if result else None
-        except Exception as e:
-            print(e)
-        finally:
-            conn.close()
-
-    @staticmethod
     def login_validate(username, password):
         conn = psycopg2.connect(**local_settings)
         try:
@@ -165,7 +141,7 @@ class User:
         try:
             cur = conn.cursor()
             query = """SELECT from_id, creation_date, text FROM messages WHERE to_id = %s;"""
-            cur.execute(query, (User.load_user_id_by_username(self.username),))
+            cur.execute(query, (self._id,))
             messages = cur.fetchall()
             formated_messages = []
             for message in messages:
@@ -174,7 +150,10 @@ class User:
                 from_id = x[0][1]
                 formated_datetime = creation_date.strftime('%H:%M %d.%m.%Y')
                 formated_messages.append((from_id, formated_datetime, text))
-            return formated_messages
+            if formated_messages:
+                return formated_messages
+            else:
+                return None
         except Exception as e:
             print(e)
         finally:
@@ -201,7 +180,6 @@ class Message:
 
     @property
     def id(self):
-        print(self._id)
         return self._id
 
     def save(self):
@@ -216,7 +194,7 @@ class Message:
                 query = """UPDATE messages SET from_id = %s, to_id = %s, text = %s WHERE id = %s;"""
                 cur.execute(query, (self.from_id, self.to_id, self.text, self._id))
             else:
-                query = """INSERT INTO messages(from_id, to_id, text, creation_date) 
+                query = """INSERT INTO messages(from_id, to_id, text, creation_date)
                 VALUES(%s, %s, %s, %s) returning id, creation_date;"""
                 cur.execute(query, (self.from_id, self.to_id, self.text, rounded_now))
                 self._id, self._creation_data = cur.fetchone()

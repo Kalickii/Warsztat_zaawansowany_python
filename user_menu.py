@@ -44,13 +44,13 @@ if __name__ == '__main__':
         elif opcja == "3":
             if logged_user is None:
                 username = input("Username: ")
-                password = input("Password: ")
                 if User.load_user_by_username(username) is None:
                     print("That username does not exist")
                 else:
+                    password = input("Password: ")
                     if User.login_validate(username, password) is True:
                         print("Login successful")
-                        user_id = User.load_user_id_by_username(username)
+                        user_id = User.load_user_by_username(username)[0]
                         logged_user = User(username, password, user_id)
                     else:
                         print("Invalid password")
@@ -82,6 +82,7 @@ if __name__ == '__main__':
                 if answer == "y":
                     logged_user.delete()
                     print("User successfully deleted")
+                    logged_user = None
                 else:
                     print("You didn't delete your account")
             else:
@@ -90,16 +91,20 @@ if __name__ == '__main__':
         elif opcja == "7":
             if logged_user is not None:
                 messages = logged_user.list_messages()
-                for message in messages:
-                    print(message)
+                if messages is not None:
+                    for message in messages:
+                        print(message)
+                else:
+                    print("You have no messages that you can display")
             else:
                 print("You have to login before you load your messages")
 
         elif opcja == "8":
             if logged_user is not None:
                 receiver = input("Receiver: ")
-                if User.load_user_by_username(receiver) is not None:
-                    receiver_id = User.load_user_id_by_username(receiver)
+                user_receiver = User.load_user_by_username(receiver)
+                if user_receiver is not None:
+                    receiver_id = user_receiver[0]
                     message = input("Message: ")
                     if len(message) < 255:
                         logged_user.send_message(receiver_id, message)
@@ -119,6 +124,7 @@ if __name__ == '__main__':
                 print("You are not logged in")
 
         elif opcja == "10":
+            logged_user = None
             break
 
         else:
